@@ -35,7 +35,3 @@ variant --help
 ```
 
 Check [asdf-vm/asdf](https://github.com/asdf-vm/asdf) readme for more instructions on how to install & manage versions.
-
-# License
-
-See [LICENSE](LICENSE) © [<Logan Linn>](https://github.com/loganlinn/)
