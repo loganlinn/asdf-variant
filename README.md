@@ -1,6 +1,6 @@
 <div align="center">
 
-# asdf-variant ![Build](https://github.com/loganlinn/asdf-variant/workflows/Build/badge.svg) ![Lint](https://github.com/loganlinn/asdf-variant/workflows/Lint/badge.svg)
+# asdf-variant
 
 [variant](https://github.com/mumoshu/variant2) plugin for the [asdf version manager](https://asdf-vm.com).
 
