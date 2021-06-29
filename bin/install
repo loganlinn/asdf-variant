@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+install_variant() {
+	local install_type=$1
+	local version=${2#v}
+	local install_path=$3
+
+	[[ $install_type = version ]] || return 1
+
+	local -r bin_path="$install_path/bin/variant"
+	local -r os=$(uname -s | tr '[:upper:]' '[:lower:]')
+	local -r arch=$([[ $(uname -m) = "x86_64" ]] && echo 'amd64' || echo 'arm64')
+	local -r download_url="https://github.com/mumoshu/variant2/releases/download/v$version/variant_${version}_${os}_$arch.tar.gz"
+
+	mkdir -p -- "$install_path/bin"
+	echo "Downloading variant from $download_url"
+	curl -sSL "$download_url" | tar xzO variant >"$bin_path"
+	chmod +x "$bin_path"
+}
+
+install_variant "${ASDF_INSTALL_TYPE:-version}" "${ASDF_INSTALL_VERSION?}" "${ASDF_INSTALL_PATH?}"
