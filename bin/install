@@ -2,22 +2,57 @@
 
 set -eo pipefail
 
+# required environment variables
+: "${ASDF_INSTALL_TYPE?}"
+: "${ASDF_INSTALL_VERSION?}"
+: "${ASDF_INSTALL_PATH?}"
+
 install_variant() {
 	local install_type=$1
 	local version=${2#v}
 	local install_path=$3
 
-	[[ $install_type = version ]] || return 1
+	if [[ $install_type != version ]]; then
+		msg "unsupported install type: $install_type"
+		return 1
+	fi
 
-	local -r bin_path="$install_path/bin/variant"
 	local -r os=$(uname -s | tr '[:upper:]' '[:lower:]')
 	local -r arch=$([[ $(uname -m) = "x86_64" ]] && echo 'amd64' || echo 'arm64')
-	local -r download_url="https://github.com/mumoshu/variant2/releases/download/v$version/variant_${version}_${os}_$arch.tar.gz"
 
-	mkdir -p -- "$install_path/bin"
-	echo "Downloading variant from $download_url"
-	curl -sSL "$download_url" | tar xzO variant >"$bin_path"
-	chmod +x "$bin_path"
+	local -r release_url="https://github.com/mumoshu/variant2/releases/download/v$version"
+	local -r archive_filename="variant_${version}_${os}_$arch.tar.gz"
+
+	fetch "$release_url/$archive_filename" -o "$archive_filename"
+	fetch "$release_url/variant_${version}_checksums.txt" | grep -F "$archive_filename" | sha256_check
+	
+	tar xzf "$archive_filename" variant
+	install -m 755 -D -t "$install_path"/bin variant
+	rm -f -- "$archive_filename" variant
 }
 
-install_variant "${ASDF_INSTALL_TYPE:-version}" "${ASDF_INSTALL_VERSION?}" "${ASDF_INSTALL_PATH?}"
+sha256_check() {
+	msg "verifying checksums..."
+	if has sha256sum; then
+		sha256sum -c
+	elif has shasum; then
+		shasum -a 256 -c
+	else
+		msg "WARN: skipping checksum verification: neither sha256sum or shasum were found on PATH."
+	fi
+}
+
+has() {
+	command -v shasum >/dev/null 2>&1
+}
+
+msg() {
+	printf '%s\n' "$*" >&2
+}
+
+fetch() {
+	msg "fetching $1..."
+	curl -fsSL "$@"
+}
+
+install_variant "$ASDF_INSTALL_TYPE" "$ASDF_INSTALL_VERSION" "$ASDF_INSTALL_PATH"
